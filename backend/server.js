@@ -27,6 +27,8 @@ app.use(cors({
 //  Body Parser
 app.use(express.json());
 
+app.use("/auth", require("./routes/authRoutes"));//ye change kiye hai recent 
+
 //  Routes
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/user", require("./routes/userRoutes"));
