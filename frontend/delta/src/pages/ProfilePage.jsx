@@ -710,33 +710,8 @@
 
 
 
+// //final code best working everygint nice . withd color theme matched with dashbaord page . @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@2
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//final code best working everygint nice . withd color theme matched with dashbaord page . @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@2
 import { useEffect, useState } from "react";
 import API from "../services/api";
 import { Copy } from "lucide-react";
@@ -772,12 +747,10 @@ export default function ProfilePage() {
   );
 
   const LinkItem = ({ label, value }) => (
-    <div className="flex flex-wrap items-center justify-between bg-[#1e293b] border border-white/10 p-3 rounded-lg shadow hover:border-cyan-500 transition-all">
-      <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
-        <span className="font-medium text-white w-48">{label}:</span>
-        <span className="text-cyan-400 break-all">{value}</span>
-      </div>
-      <div className="mt-2 sm:mt-0 flex items-center gap-2">
+    <div className="flex items-center justify-between bg-[#1e293b] border border-white/10 p-3 rounded-lg shadow hover:border-cyan-500 transition-all">
+      <span className="font-medium text-white w-48 flex-shrink-0">{label}:</span>
+      <span className="text-cyan-400 break-all flex-1 mx-4">{value}</span>
+      <div className="flex items-center gap-2 flex-shrink-0">
         <button
           onClick={() => copyToClipboard(value)}
           className="text-cyan-300 hover:text-white transition-colors"
@@ -892,3 +865,22 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
