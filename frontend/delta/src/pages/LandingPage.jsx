@@ -1,27 +1,6 @@
-//@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+ 
 
-// import { useNavigate } from "react-router-dom";
-
-// export default function LandingPage() {
-//   const navigate = useNavigate();
-
-//   return (
-//     <div className="flex flex-col items-center justify-center h-screen bg-gray-100 text-center p-4">
-//       <h1 className="text-4xl font-bold mb-4">Welcome to Project Delta</h1>
-//       <p className="mb-6 text-lg text-gray-700">Organize your links, summaries & profiles in one place</p>
-//       <div className="space-x-4">
-//         <button onClick={() => navigate("/auth")} className="bg-blue-600 text-white px-6 py-2 rounded-md">Get Started</button>
-//         <button onClick={() => navigate("/auth")} className="bg-green-600 text-white px-6 py-2 rounded-md">Login</button>
-//         <button onClick={() => alert("Project Delta helps you store and access all your career content in one place.")} className="bg-gray-600 text-white px-6 py-2 rounded-md">About Us</button>
-//       </div>
-//     </div>
-//   );
-// }
-
-
-
-
-//after design  nice  finall code very fine and best code @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+//after design  nice  finall code very fine and best code @@@ 
 import { useNavigate } from "react-router-dom";
 import StarBorder from "../components/ui/StarBorder";
 import ChromaGrid from "../components/ui/ChromaGrid";
