@@ -2,12 +2,12 @@
  
 
 
-// @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@2
+// @@@@@@@@@@@@ 
 
 const axios = require("axios");
-const User = require("../models/User.js"); // Correct path
+const User = require("../models/User.js");  
 
-// Rephrase text using Cohere AI
+// here we are Rephrasing  text using Cohere AI
 const rephraseText = async (req, res) => {
   try {
     const { prompt } = req.body;
@@ -41,7 +41,7 @@ const rephraseText = async (req, res) => {
   }
 };
 
-// Save AI-rephrased summary to the user's data
+// HERE we are Saveing  AI-rephrased summary to the user's data
 const saveRephrased = async (req, res) => {
   try {
     const { text } = req.body;
@@ -51,7 +51,7 @@ const saveRephrased = async (req, res) => {
     }
 
 
-    const userId = req.user.id; // ✅ FIXED: req.user is already the user ID
+    const userId = req.user.id;  
     if (!userId) {
       return res.status(401).json({ message: "Unauthorized" });
     }
@@ -80,7 +80,7 @@ const saveRephrased = async (req, res) => {
 // Delete AI-rephrased summary by ID
 const deleteRephrased = async (req, res) => {
   try {
-    const userId = req.user.id; // ✅ FIXED: req.user is already the user ID
+    const userId = req.user.id;  
     const { id } = req.params;
 
     if (!userId) {
