@@ -18,7 +18,7 @@ const auth = (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
-    // ✅ Fixed: store full decoded payload (not just id)
+ 
     req.user = decoded;
 
     next();
