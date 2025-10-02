@@ -1,253 +1,6 @@
  
 
 
-
-// @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
-
-
-//  import { useEffect, useState } from "react";
-// import API from "../services/api";
-
-// export default function AiRephrasePage() {
-//   const [prompt, setPrompt] = useState("");
-//   const [rephrased, setRephrased] = useState("");
-//   const [option, setOption] = useState("whyHire");
-//   const [savedSummaries, setSavedSummaries] = useState([]);
-//   const [isSaved, setIsSaved] = useState(false);
-//   const [isLoading, setIsLoading] = useState(false);
-
-//   const options = {
-//     whyHire: "Why should we hire you?",
-//     bestFit: "Why are you the best fit for this role?",
-//     experience: "Tell us about your work experience.",
-//     general: "General rephrase:",
-//   };
-
-//   useEffect(() => {
-//     fetchSaved();
-//   }, []);
-
-//   const fetchSaved = async () => {
-//     try {
-//       const res = await API.get("/user/dashboard");
-//       setSavedSummaries(res.data.summaries.aiRephrased || []);
-//     } catch (err) {
-//       console.error("Failed to load saved summaries:", err);
-//     }
-//   };
-
-//   const handleRephrase = async () => {
-//     if (!prompt.trim()) {
-//       alert("Please enter some text to rephrase.");
-//       return;
-//     }
-
-//     setIsLoading(true);
-//     let fullPrompt;
-
-//     if (option === "general") {
-//       fullPrompt = `Please rephrase this text in a professional, concise manner from first person perspective: ${prompt}`;
-//     } else {
-//       const questionText = options[option];
-//       fullPrompt = `Question: ${questionText}\nMy response: ${prompt}\n\nPlease rephrase my response to be professional, confident, and direct from first person perspective in 2-3 sentences.`;
-//     }
-
-//     console.log("Sending prompt:", fullPrompt);
-
-//     try {
-//       const timeoutPromise = new Promise((_, reject) =>
-//         setTimeout(() => reject(new Error("Request timeout")), 30000)
-//       );
-
-//       const apiPromise = API.post("/ai/rephrase", { prompt: fullPrompt });
-
-//       const res = await Promise.race([apiPromise, timeoutPromise]);
-//       console.log("API response:", res.data);
-
-//       if (res.data && res.data.rephrased) {
-//         setRephrased(res.data.rephrased);
-//         setIsSaved(false);
-//       } else {
-//         console.error("Unexpected response format:", res.data);
-//         alert("Received unexpected response format from server.");
-//       }
-//     } catch (err) {
-//       console.error("Error details:", err);
-//       console.error("Error response:", err.response?.data);
-
-//       if (err.message === "Request timeout") {
-//         alert("Request timed out. Please check your backend AI service.");
-//       } else {
-//         alert(`Failed to get rephrased output: ${err.response?.data?.message || err.message}`);
-//       }
-//     } finally {
-//       setIsLoading(false);
-//     }
-//   };
-
-//   const handleSave = async () => {
-//     if (!rephrased) return;
-
-//     const token = localStorage.getItem("token");
-//     if (!token) {
-//       alert("You must be logged in to save summaries.");
-//       return;
-//     }
-
-//     try {
-//       const timeoutPromise = new Promise((_, reject) =>
-//         setTimeout(() => reject(new Error("Save request timeout")), 15000)
-//       );
-
-//       const apiPromise = API.post(
-//         "/ai/save",
-//         { text: rephrased },
-//         {
-//           headers: {
-//             Authorization: `Bearer ${token}`,
-//           },
-//         }
-//       );
-
-//       const res = await Promise.race([apiPromise, timeoutPromise]);
-//       console.log("Save response:", res.data);
-//       alert("Summary saved!");
-//       setIsSaved(true);
-//       await fetchSaved();
-//     } catch (err) {
-//       console.error("Save error:", err);
-//       console.error("Error response:", err.response?.data);
-//       console.error("Error status:", err.response?.status);
-
-//       if (err.message === "Save request timeout") {
-//         alert("Save request timed out. Please check your backend save service.");
-//       } else {
-//         alert(`Failed to save summary: ${err.response?.data?.message || err.message}`);
-//       }
-//     }
-//   };
-
-//   const handleDelete = async (id) => {
-//     const token = localStorage.getItem("token");
-//     if (!token) {
-//       alert("You must be logged in to delete summaries.");
-//       return;
-//     }
-
-//     try {
-//       await API.delete(`/ai/delete/${id}`, {
-//         headers: {
-//           Authorization: `Bearer ${token}`,
-//         },
-//       });
-//       alert("Summary deleted!");
-//       fetchSaved();
-//     } catch (err) {
-//       console.error("Delete error:", err);
-//       alert("Failed to delete summary.");
-//     }
-//   };
-
-//   const handleDeleteCurrent = async () => {
-//     const currentSummary = savedSummaries.find((summary) => summary.content === rephrased);
-//     if (currentSummary) {
-//       console.log("Deleting current summary:", currentSummary._id);
-//       await handleDelete(currentSummary._id);
-//       setIsSaved(false);
-//       setRephrased("");
-//     } else {
-//       console.log("Current summary not found in saved summaries");
-//     }
-//   };
-
-//   return (
-//     <div className="max-w-2xl mx-auto p-6">
-//       <h2 className="text-xl font-semibold mb-4">AI Rephrase</h2>
-
-//       <select
-//         value={option}
-//         onChange={(e) => setOption(e.target.value)}
-//         className="border p-2 rounded mb-4 w-full"
-//       >
-//         <option value="whyHire">Why should we hire you?</option>
-//         <option value="bestFit">Why are you the best fit for this role?</option>
-//         <option value="experience">Tell us about your work experience</option>
-//         <option value="general">General rephrase</option>
-//       </select>
-
-//       <textarea
-//         className="w-full border p-2 rounded mb-4"
-//         rows="4"
-//         placeholder="Enter your text..."
-//         value={prompt}
-//         onChange={(e) => setPrompt(e.target.value)}
-//       />
-
-//       <button
-//         className={`px-4 py-2 rounded mr-2 ${
-//           isLoading ? "bg-gray-400 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700"
-//         } text-white`}
-//         onClick={handleRephrase}
-//         disabled={isLoading}
-//       >
-//         {isLoading ? "Rephrasing..." : "Rephrase"}
-//       </button>
-
-//       {rephrased && (
-//         <div className="mt-4 p-4 border rounded bg-gray-50">
-//           <h3 className="font-semibold mb-2">AI Output:</h3>
-//           <p>{rephrased}</p>
-
-//           {!isSaved ? (
-//             <button
-//               className="mt-2 bg-green-600 text-white px-3 py-1 rounded"
-//               onClick={handleSave}
-//             >
-//               Save Summary
-//             </button>
-//           ) : (
-//             <button
-//               className="mt-2 bg-red-500 text-white px-3 py-1 rounded"
-//               onClick={handleDeleteCurrent}
-//             >
-//               Delete Summary
-//             </button>
-//           )}
-//         </div>
-//       )}
-
-//       {savedSummaries.length > 0 && (
-//         <div className="mt-6">
-//           <h3 className="text-lg font-semibold mb-2">Saved Summaries</h3>
-//           {savedSummaries.map((summary) => (
-//             <div
-//               key={summary._id}
-//               className="p-3 mb-3 border rounded bg-white shadow-sm"
-//             >
-//               <p className="mb-2">{summary.content}</p>
-//               <button
-//                 className="bg-red-500 text-white px-3 py-1 rounded"
-//                 onClick={() => handleDelete(summary._id)}
-//               >
-//                 Delete
-            
-//               </button>
-//             </div>
-//           ))}
-//         </div>
-//       )}
-//     </div>
-//   );
-// }
-
-
-
- 
-
- //@@@@@@@@@@@@@@@@@@@@@@@@@@@@2
-
-
 import { useEffect, useState } from "react";
 import API from "../services/api";
 import { Copy, Trash2 } from "lucide-react";
@@ -408,7 +161,7 @@ export default function AiRephrasePage() {
       </button>
 
       <div className="max-w-3xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6 text-center">✨ AI Rephrase ✨</h1>
+        <h1 className="text-3xl font-bold mb-6 text-center"> AI Rephrase </h1>
 
         <textarea
           className="w-full bg-white/10 backdrop-blur-lg border border-white/20 p-4 rounded-xl mb-4 text-white placeholder-gray-300"
@@ -449,7 +202,7 @@ export default function AiRephrasePage() {
           onClick={handleRephrase}
           disabled={isLoading}
         >
-          {isLoading ? "Rephrasing..." : "⭐ Rephrase with AI"}
+          {isLoading ? "Rephrasing..." : " Rephrase with AI"}
         </button>
 
         {rephrased && (
@@ -465,7 +218,7 @@ export default function AiRephrasePage() {
                   className="bg-green-500 hover:bg-green-600 text-white font-semibold px-4 py-2 rounded-xl transition flex items-center gap-2"
                   onClick={handleSave}
                 >
-                  ⭐ Save
+                   Save
                 </button>
               ) : (
                 <>
