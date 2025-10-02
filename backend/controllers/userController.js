@@ -5,7 +5,7 @@
 
 const User = require("../models/User");
 
-// Get dashboard data for the logged-in user
+// heer we use  Get method to fetch  dashboard data for the logged-in user
 exports.getDashboardData = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password");
@@ -15,7 +15,7 @@ exports.getDashboardData = async (req, res) => {
   }
 };
 
-// Update dashboard data for the logged-in user
+// Updateing  dashboard data for the logged-in user
 exports.updateDashboardData = async (req, res) => {
   try {
     await User.findByIdAndUpdate(req.user.id, req.body, { new: true });
