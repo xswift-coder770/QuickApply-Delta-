@@ -1,5 +1,6 @@
- 
 
+
+// frontend/src/pages/AiRephrasePage.jsx
 
 import { useEffect, useState } from "react";
 import API from "../services/api";
@@ -41,6 +42,12 @@ export default function AiRephrasePage() {
       return;
     }
 
+    // Validate minimum length
+    if (prompt.trim().length < 10) {
+      alert("Please enter at least 10 characters to rephrase.");
+      return;
+    }
+
     setIsLoading(true);
     let fullPrompt;
 
@@ -53,7 +60,7 @@ export default function AiRephrasePage() {
 
     try {
       const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("Request timeout")), 30000)
+        setTimeout(() => reject(new Error("Request timeout")), 35000)
       );
 
       const apiPromise = API.post("/ai/rephrase", { prompt: fullPrompt });
@@ -67,8 +74,14 @@ export default function AiRephrasePage() {
         alert("Received unexpected response format from server.");
       }
     } catch (err) {
+      console.error("Rephrase error:", err);
+      
       if (err.message === "Request timeout") {
-        alert("Request timed out. Please check your backend AI service.");
+        alert("Request timed out. The AI service is taking too long to respond. Please try again.");
+      } else if (err.response?.data?.error) {
+        alert(`AI Error: ${err.response.data.error}`);
+      } else if (err.response?.status === 500) {
+        alert("Server error. Please check if your Cohere API key is valid and has credits.");
       } else {
         alert(`Failed to get rephrased output: ${err.response?.data?.message || err.message}`);
       }
@@ -93,21 +106,20 @@ export default function AiRephrasePage() {
 
       const apiPromise = API.post(
         "/ai/save",
-        { text: rephrased },
+        { text: rephrased, option },
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
 
-      const res = await Promise.race([apiPromise, timeoutPromise]);
+      await Promise.race([apiPromise, timeoutPromise]);
       alert("Summary saved!");
       setIsSaved(true);
       await fetchSaved();
     } catch (err) {
+      console.error("Save error:", err);
       if (err.message === "Save request timeout") {
-        alert("Save request timed out. Please check your backend save service.");
+        alert("Save request timed out. Please try again.");
       } else {
         alert(`Failed to save summary: ${err.response?.data?.message || err.message}`);
       }
@@ -123,14 +135,13 @@ export default function AiRephrasePage() {
 
     try {
       await API.delete(`/ai/delete/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
       alert("Summary deleted!");
       fetchSaved();
     } catch (err) {
-      alert("Failed to delete summary.");
+      console.error("Delete error:", err);
+      alert(`Failed to delete summary: ${err.response?.data?.message || err.message}`);
     }
   };
 
@@ -152,7 +163,6 @@ export default function AiRephrasePage() {
 
   return (
     <div className="min-h-screen bg-[#0d1b2a] text-white p-6 md:p-10 relative">
-      {/* Top-left Dashboard button */}
       <button
         onClick={() => navigate("/dashboard")}
         className="absolute top-6 right-6 bg-white/10 backdrop-blur border border-white/20 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition"
@@ -166,7 +176,7 @@ export default function AiRephrasePage() {
         <textarea
           className="w-full bg-white/10 backdrop-blur-lg border border-white/20 p-4 rounded-xl mb-4 text-white placeholder-gray-300"
           rows="4"
-          placeholder="Enter your text..."
+          placeholder="Enter your text (minimum 10 characters)..."
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
         />
@@ -191,14 +201,22 @@ export default function AiRephrasePage() {
             </option>
           </select>
           <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-white">
-            <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg
+              className="h-5 w-5"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
           </div>
         </div>
 
         <button
-          className={`w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-purple-600 hover:to-blue-600 transition text-white px-4 py-3 rounded-xl font-bold shadow-lg mb-4 ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+          className={`w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-purple-600 hover:to-blue-600 transition text-white px-4 py-3 rounded-xl font-bold shadow-lg mb-4 ${
+            isLoading ? "opacity-50 cursor-not-allowed" : ""
+          }`}
           onClick={handleRephrase}
           disabled={isLoading}
         >
@@ -242,14 +260,16 @@ export default function AiRephrasePage() {
 
         {savedSummaries.length > 0 && (
           <div className="mt-10">
-            <h2 className="text-2xl font-semibold mb-4">💾 Saved Summaries</h2>
+            <h2 className="text-2xl font-semibold mb-4"> Saved Summaries</h2>
             {savedSummaries.map((summary) => (
               <div
                 key={summary._id}
                 className="bg-white/10 backdrop-blur-lg border border-white/20 p-4 rounded-xl mb-4"
               >
                 <div className="flex justify-between mb-2 items-center">
-                  <span className="text-white font-bold capitalize">{option}</span>
+                  <span className="text-white font-bold capitalize">
+                    {summary.option || "general"}
+                  </span>
                   <div className="flex gap-3">
                     <button
                       onClick={() => copyToClipboard(summary.content)}
