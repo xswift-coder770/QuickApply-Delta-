@@ -1,64 +1,118 @@
- 
- 
 
 
-// @@@@@@@@@@@@ 
+// backend/controllers/aiController.js
 
 const axios = require("axios");
-const User = require("../models/User.js");  
+const User = require("../models/User.js");
 
-// here we are Rephrasing  text using Cohere AI
+/**
+ * Rephrase text using Cohere Chat API (command-r-plus-08-2024)
+ */
 const rephraseText = async (req, res) => {
   try {
-    const { prompt } = req.body;
+    let { prompt } = req.body;
 
-    if (!prompt) {
-      return res.status(400).json({ error: "Prompt is required" });
+     
+    if (!prompt || typeof prompt !== "string" || !prompt.trim()) {
+      return res.status(400).json({ error: "Prompt is required and cannot be empty." });
+    }
+    prompt = prompt.trim();
+ 
+    if (prompt.length < 10) {
+      return res.status(400).json({ error: "Prompt must be at least 10 characters long." });
     }
 
+    
+    const payload = {
+      model: "command-r-plus-08-2024",  
+      messages: [
+        {
+          role: "user",
+          content: prompt,  
+        },
+      ],
+      max_tokens: 500,
+      temperature: 0.7,
+    };
+    console.log("Sending to Cohere:", JSON.stringify(payload, null, 2));
+
+    // Call Cohere Chat API
     const response = await axios.post(
-      "https://api.cohere.ai/v1/generate",
-      {
-        model: "command",
-        prompt: prompt,
-        max_tokens: 100,
-        temperature: 0.7,
-      },
+      "https://api.cohere.com/v2/chat",  
+      payload,
       {
         headers: {
           Authorization: `Bearer ${process.env.COHERE_API_KEY}`,
           "Content-Type": "application/json",
         },
+        timeout: 30000,  
       }
     );
 
-    const generated = response.data.generations[0]?.text?.trim();
-    res.json({ rephrased: generated || "No output generated." });
+    console.log("Cohere response:", JSON.stringify(response.data, null, 2));
+ 
+    let generated;
+    
+     
+    if (response.data.message?.content) {
+    
+      //formate
+      if (Array.isArray(response.data.message.content)) {
+        generated = response.data.message.content
+          .map(item => item.text)
+          .join('')
+          .trim();
+      } else if (typeof response.data.message.content === 'string') {
+        generated = response.data.message.content.trim();
+      }
+    } else if (response.data.text) {
+    
+      generated = response.data.text.trim();
+    }
 
+    if (!generated) {
+      console.error("No output in response:", response.data);
+      return res.status(500).json({ error: "No output generated from AI." });
+    }
+
+    return res.json({ rephrased: generated });
   } catch (err) {
-    console.error("AI error:", err.response?.data || err.message);
-    res.status(500).json({ error: "Failed to get rephrased output" });
+    console.error("Full AI error:", err.response ? err.response.data : err.message);
+    
+    
+    if (err.response?.data) {
+      return res.status(err.response.status || 500).json({ 
+        error: err.response.data.message || "Failed to get rephrased output",
+        details: err.response.data
+      });
+    }
+    
+    return res.status(500).json({ 
+      error: "Failed to get rephrased output",
+      message: err.message 
+    });
   }
 };
 
-// HERE we are Saveing  AI-rephrased summary to the user's data
+/**
+ * Save AI-rephrased summary to user's account
+ */
 const saveRephrased = async (req, res) => {
   try {
-    const { text } = req.body;
+    const { text, option } = req.body;
 
-    if (!text) {
-      return res.status(400).json({ message: "Text is required" });
+    if (!text || typeof text !== "string" || !text.trim()) {
+      return res.status(400).json({ message: "Text is required." });
     }
 
-
-    const userId = req.user.id;  
+    const userId = req.user?.id;
     if (!userId) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({ message: "User not found." });
     }
 
     if (!user.summaries) user.summaries = {};
@@ -66,34 +120,35 @@ const saveRephrased = async (req, res) => {
       user.summaries.aiRephrased = [];
     }
 
-    user.summaries.aiRephrased.push({ content: text });
+    user.summaries.aiRephrased.push({ 
+      content: text.trim(),
+      option: option || "general",
+      createdAt: new Date()
+    });
     await user.save();
 
-    res.json({ message: "Summary saved successfully" });
-
+    return res.json({ message: "Summary saved successfully." });
   } catch (err) {
     console.error("Save error:", err.message);
-    res.status(500).json({ message: "Failed to save summary" });
+    return res.status(500).json({ message: "Failed to save summary." });
   }
 };
 
-// Delete AI-rephrased summary by ID
+/**
+ * Delete AI-rephrased summary by ID
+ */
 const deleteRephrased = async (req, res) => {
   try {
-    const userId = req.user.id;  
+    const userId = req.user?.id;
     const { id } = req.params;
 
-    if (!userId) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
+    if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
     const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+    if (!user) return res.status(404).json({ message: "User not found." });
 
     if (!user.summaries || !Array.isArray(user.summaries.aiRephrased)) {
-      return res.status(404).json({ message: "No AI summaries found" });
+      return res.status(404).json({ message: "No AI summaries found." });
     }
 
     const beforeCount = user.summaries.aiRephrased.length;
@@ -103,20 +158,15 @@ const deleteRephrased = async (req, res) => {
     const afterCount = user.summaries.aiRephrased.length;
 
     if (beforeCount === afterCount) {
-      return res.status(404).json({ message: "Summary not found" });
+      return res.status(404).json({ message: "Summary not found." });
     }
 
     await user.save();
-    res.json({ message: "Summary deleted successfully" });
-
+    return res.json({ message: "Summary deleted successfully." });
   } catch (err) {
     console.error("Delete error:", err.message);
-    res.status(500).json({ message: "Failed to delete summary" });
+    return res.status(500).json({ message: "Failed to delete summary." });
   }
 };
 
 module.exports = { rephraseText, saveRephrased, deleteRephrased };
-
-
- 
- 
